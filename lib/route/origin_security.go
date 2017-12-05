@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type matchedDomainKey int
@@ -15,9 +17,12 @@ type matchedDomainKey int
 // OriginSecurity will store the matching domain in the http.Request's Context. Use MatchedDomain
 // to retrieve the value in later logic.
 func OriginSecurity(domains []Domain) SecurityHandler {
+	logger := log.WithFields(log.Fields{"validDomains": domains})
+
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			url, err := url.Parse(r.Header.Get("Origin"))
+			origin := r.Header.Get("Origin")
+			url, err := url.Parse(origin)
 			if err != nil {
 				panic(err)
 			}
@@ -32,6 +37,7 @@ func OriginSecurity(domains []Domain) SecurityHandler {
 				}
 			}
 
+			logger.WithFields(log.Fields{"origin": origin}).Info("Origin validation failed")
 			w.WriteHeader(http.StatusForbidden)
 			w.Write([]byte("Origin is not a trusted host."))
 		})
