@@ -17,7 +17,11 @@ type matchedDomainKey int
 // OriginSecurity will store the matching domain in the http.Request's Context. Use MatchedDomain
 // to retrieve the value in later logic.
 func OriginSecurity(domains []Domain) SecurityHandler {
-	logger := log.WithFields(log.Fields{"validDomains": domains})
+	var validDomains []string
+	for _, d := range domains {
+		validDomains = append(validDomains, d.String())
+	}
+	logger := log.WithFields(log.Fields{"validDomains": validDomains})
 
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +41,11 @@ func OriginSecurity(domains []Domain) SecurityHandler {
 				}
 			}
 
-			logger.WithFields(log.Fields{"origin": origin}).Info("Origin validation failed")
+			if len(origin) == 0 {
+				logger.Debug("Request origin is missing")
+			} else {
+				logger.WithFields(log.Fields{"origin": origin}).Debug("Request origin is invalid")
+			}
 			w.WriteHeader(http.StatusForbidden)
 			w.Write([]byte("Origin is not a trusted host."))
 		})
