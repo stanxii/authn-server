@@ -1,4 +1,3 @@
-PKGS := $(shell glide nv)
 ORG := keratin
 PROJECT := authn-server
 NAME := $(ORG)/$(PROJECT)
@@ -7,7 +6,6 @@ MAIN := main.go routing.go
 
 .PHONY: clean
 clean:
-	rm -rf vendor
 	rm -rf dist
 	rm -f api/views/*.ego.go
 
@@ -17,12 +15,7 @@ $(EGOS):
 	go get github.com/benbjohnson/ego/cmd/ego
 	ego api/views
 
-init: $(EGOS) vendor
-
-# Fetch dependencies
-vendor: glide.yaml
-	glide install
-	go install
+init: $(EGOS)
 
 # The Linux builder is a Docker container because that's the easiest way to get the toolchain for
 # CGO on a MacOS host.
